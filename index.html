@@ -479,8 +479,8 @@
       </div>
     </div>
 
-    <audio id="bgm" loop>
-      <source src="audio/dunglamtraitimanhdau.mp3" />
+    <audio id="bgm" preload="auto" playsinline loop>
+      <source src="audio/dunglamtraitimanhdau.mp3" type="audio/mpeg" />
     </audio>
 
     <!-- partial:index.partial.html -->
@@ -734,6 +734,24 @@ function startMusic() {
           alert("Sai mật khẩu rồi 😅");
           clearPassword();
           return;
+        }
+
+        const bgm = document.getElementById("bgm");
+
+        if (bgm) {
+          bgm.volume = 0.7;
+
+          // 🔥 iOS SAFE UNLOCK
+          bgm
+            .play()
+            .then(() => {
+              bgm.pause();
+              bgm.currentTime = 0;
+
+              // quan trọng với iOS
+              bgm.load();
+            })
+            .catch(() => {});
         }
 
         const loginScreen = document.getElementById("loginScreen");
