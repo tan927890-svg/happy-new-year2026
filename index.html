@@ -734,6 +734,13 @@ function startMusic() {
           return;
         }
 
+        // 🔥 PLAY CẢ 2 NHẠC NGAY TRONG CLICK (QUAN TRỌNG CHO iOS)
+        loginMusic.volume = 0.6;
+        loginMusic.play().catch(() => {});
+
+        mainMusic.volume = 0; // bật sẵn nhưng tắt tiếng
+        mainMusic.play().catch(() => {}); // 🔥 BẮT BUỘC PHẢI CÓ
+
         const loginScreen = document.getElementById("loginScreen");
 
         loginScreen.style.transition = "0.6s ease";
@@ -931,37 +938,48 @@ function startMusic() {
       loginMusic.load();
       mainMusic.load();
 
-      // 🔥 Unlock audio cho iOS + Mobile
       function unlockAudio() {
-        loginMusic.volume = 0.6;
+        loginMusic.volume = 0.7;
         loginMusic.play().catch(() => {});
       }
 
-      document.addEventListener("touchstart", unlockAudio, { once: true });
-      document.addEventListener("click", unlockAudio, { once: true });
+      /* 1️⃣ Thử phát ngay khi load xong */
+      window.addEventListener("load", () => {
+        loginMusic.volume = 0.7;
+        loginMusic.play().catch(() => {
+          // Nếu bị chặn (iOS) thì đợi chạm
+          document.addEventListener("touchstart", unlockAudio, { once: true });
+          document.addEventListener("click", unlockAudio, { once: true });
+        });
+      });
 
       // 🔥 Chuyển sang nhạc chính (fade mượt)
       function switchToMainMusic() {
-        let fadeOut = setInterval(() => {
-          if (loginMusic.volume > 0.05) {
-            loginMusic.volume -= 0.05;
-          } else {
-            clearInterval(fadeOut);
+        // đảm bảo nhạc 2 đã chạy sẵn
+        if (mainMusic.paused) {
+          mainMusic.volume = 0.001; // không để 0 tuyệt đối (iOS)
+          mainMusic.play().catch(() => {});
+        }
+
+        let progress = 0; // 0 → 1
+        let duration = 1000; // thời gian chuyển (2 giây)
+        let intervalTime = 50;
+        let step = intervalTime / duration;
+
+        let fade = setInterval(() => {
+          progress += step;
+
+          if (progress >= 1) {
+            progress = 1;
+            clearInterval(fade);
             loginMusic.pause();
             loginMusic.currentTime = 0;
           }
-        }, 100);
 
-        mainMusic.volume = 0;
-        mainMusic.play().catch(() => {});
-
-        let fadeIn = setInterval(() => {
-          if (mainMusic.volume < 0.7) {
-            mainMusic.volume += 0.05;
-          } else {
-            clearInterval(fadeIn);
-          }
-        }, 100);
+          // 🎯 Crossfade thật sự
+          loginMusic.volume = 0.7 * (1 - progress);
+          mainMusic.volume = 0.7 * progress;
+        }, intervalTime);
       }
 
       // 🔥 Dừng khi chuyển tab
