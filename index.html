@@ -478,10 +478,8 @@
         </div>
       </div>
     </div>
-
-    <audio id="bgm" preload="auto" playsinline loop>
-      <source src="audio/dunglamtraitimanhdau.mp3" type="audio/mpeg" />
-    </audio>
+    <audio id="bgmLogin" preload="auto" playsinline></audio>
+    <audio id="bgmMain" preload="auto" playsinline loop></audio>
 
     <!-- partial:index.partial.html -->
     <!-- SVG Spritesheet -->
@@ -736,24 +734,6 @@ function startMusic() {
           return;
         }
 
-        const bgm = document.getElementById("bgm");
-
-        if (bgm) {
-          bgm.volume = 0.7;
-
-          // 🔥 iOS SAFE UNLOCK
-          bgm
-            .play()
-            .then(() => {
-              bgm.pause();
-              bgm.currentTime = 0;
-
-              // quan trọng với iOS
-              bgm.load();
-            })
-            .catch(() => {});
-        }
-
         const loginScreen = document.getElementById("loginScreen");
 
         loginScreen.style.transition = "0.6s ease";
@@ -874,25 +854,61 @@ function startMusic() {
         setTimeout(() => {
           text.style.opacity = "1";
           text.style.transform = "translate(-50%, -50%) scale(1)";
+          switchToMainMusic();
         }, 100);
 
-        // 🎵 BẬT NHẠC CÙNG LÚC VỚI CHỮ
-        const bgm = document.getElementById("bgm");
-        if (bgm) {
-          bgm.volume = 0.7;
-          bgm.play().catch((e) => console.log(e));
-        }
-
-        // Giữ chữ 4 giây
+        // ⏳ Sau 4.1s → mờ chữ
         setTimeout(() => {
           text.style.opacity = "0";
         }, 4100);
 
-        // Sau khi chữ biến mất mới vào giao diện chính
+        // ⏳ Sau 7.5s → xóa chữ & vào main
         setTimeout(() => {
           text.remove();
           startMainShow();
+
+          // ⏳ Sau khi vào main 20s → hiện chữ thứ 2
+          setTimeout(() => {
+            showSecondGreeting();
+          }, 10000);
         }, 7500);
+      }
+
+      // ================= CHỮ THỨ 2 =================
+      function showSecondGreeting() {
+        const text2 = document.createElement("div");
+        text2.innerText = "🐎 MÃ ĐÁO THÀNH CÔNG 🐎";
+
+        text2.style.position = "fixed";
+        text2.style.top = "50%";
+        text2.style.left = "50%";
+        text2.style.transform = "translate(-50%, -50%) scale(0.8)";
+        text2.style.fontSize = "56px";
+        text2.style.fontWeight = "bold";
+        text2.style.color = "gold";
+        text2.style.textAlign = "center";
+        text2.style.textShadow = "0 0 30px #fff, 0 0 60px gold";
+        text2.style.opacity = "0";
+        text2.style.transition = "1.2s ease";
+        text2.style.zIndex = "9999";
+
+        document.body.appendChild(text2);
+
+        // ✨ Hiện ra
+        setTimeout(() => {
+          text2.style.opacity = "1";
+          text2.style.transform = "translate(-50%, -50%) scale(1)";
+        }, 100);
+
+        // ⏳ Giữ 4s rồi mờ đi
+        setTimeout(() => {
+          text2.style.opacity = "0";
+        }, 4100);
+
+        // 🗑 Xóa khỏi DOM
+        setTimeout(() => {
+          text2.remove();
+        }, 6000);
       }
 
       // ================= GIAO DIỆN CHÍNH =================
@@ -903,21 +919,58 @@ function startMusic() {
             autoLaunch: true,
           });
         }
+      } // ================= AUDIO SETUP (BẢN CHUẨN) =================
 
-        // Bật nhạc
-        const bgm = document.getElementById("bgm");
-        if (bgm) {
-          bgm.volume = 0.7;
-          bgm.play().catch((e) => console.log(e));
+      const loginMusic = document.getElementById("bgmLogin");
+      const mainMusic = document.getElementById("bgmMain");
+
+      // Gán file
+      loginMusic.src = "audio/dunglamtraitimanhdau.mp3";
+      mainMusic.src = "audio/nhacintro.mp3";
+
+      loginMusic.load();
+      mainMusic.load();
+
+      // 🔥 Unlock audio cho iOS + Mobile
+      function unlockAudio() {
+        loginMusic.volume = 0.6;
+        loginMusic.play().catch(() => {});
+      }
+
+      document.addEventListener("touchstart", unlockAudio, { once: true });
+      document.addEventListener("click", unlockAudio, { once: true });
+
+      // 🔥 Chuyển sang nhạc chính (fade mượt)
+      function switchToMainMusic() {
+        let fadeOut = setInterval(() => {
+          if (loginMusic.volume > 0.05) {
+            loginMusic.volume -= 0.05;
+          } else {
+            clearInterval(fadeOut);
+            loginMusic.pause();
+            loginMusic.currentTime = 0;
+          }
+        }, 100);
+
+        mainMusic.volume = 0;
+        mainMusic.play().catch(() => {});
+
+        let fadeIn = setInterval(() => {
+          if (mainMusic.volume < 0.7) {
+            mainMusic.volume += 0.05;
+          } else {
+            clearInterval(fadeIn);
+          }
+        }, 100);
+      }
+
+      // 🔥 Dừng khi chuyển tab
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          loginMusic.pause();
+          mainMusic.pause();
         }
-      }
-    </script>
-
-    <script>
-      function playMusic() {
-        const music = document.getElementById("bgm");
-        music.play();
-      }
+      });
     </script>
   </body>
 </html>
